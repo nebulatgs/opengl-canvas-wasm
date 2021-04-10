@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "emscripten",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/codespace/SDL2/include",
+                "/home/codespace/SDL2_image/include",
+                "/home/codespace/SDL2_gfx",
+                "/home/codespace/emsdk/upstream/emscripten/system/include"
+            ],
+            "defines": [],
+            "compilerPath": "/home/codespace/emsdk/upstream/emscripten/emcc",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-clang-x64",
+            "compilerArgs": [
+            ]
+        }
+    ],
+    "version": 4
+}
