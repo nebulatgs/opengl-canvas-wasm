@@ -18,5 +18,5 @@ void main(){
     vec3 col = vec3(rg,b);
 
     // Output to screen 
-    gl_FragColor = vec4(col,1);// / vec4(vec(5),1);
+    gl_FragColor = vec4(col,0.3);// / vec4(vec(5),1);
 }

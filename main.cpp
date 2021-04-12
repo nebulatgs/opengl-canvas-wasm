@@ -19,7 +19,7 @@ uint16_t screen_width, screen_height;
 float zoomPhysics[3], scale;
 v2d panPhysics[3] = {{.2,.2}, {0,0}, {1,1}}, offset;
 bool isMouseDown;
-GLuint gridProgram, tilesProgram;
+GLuint gridProgram, tilesProgram, tiles2Program;
 SDL_Window *window;
 void getScreenSize(){
     screen_width = (uint16_t)EM_ASM_INT({
@@ -38,13 +38,22 @@ void getScreenSize(){
     // screen_height = screen_height > 1080 ? 1080 : screen_height;
 }
 
+// GLfloat vertices[12] = {-1.0f,  1.0f,
+//                         -1.0f, -1.0f,
+//                          1.0f, -1.0f,
+                         
+//                         -1.0f, -1.0f,
+//                          1.0f,  1.0f,
+//                          1.0f, -1.0f};
+
 GLfloat vertices[12] = {-1.0f,  1.0f,
                         -1.0f, -1.0f,
+                         1.0f, 1.0f,
+                    
+                         1.0f, 1.0f,
                          1.0f, -1.0f,
-                         
-                        -1.0f, -1.0f,
-                         1.0f,  1.0f,
-                         1.0f, -1.0f};
+                         -1.0f, -1.0f};
+
 GLfloat quadVertices[] = {
     // positions     // colors
     -0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
@@ -134,12 +143,7 @@ void setCanvas(){
 }
 
 void drawGrid(){
-    scale = processPhysics <float> (zoomPhysics, 1.1f, 7, 300);
-    offset = processPhysics <v2d> (panPhysics, {1.1,1.1}, {0,0}, {300,300});
-    // SDL_SetWindowSize(window, screen_width, screen_height);
-
-    setCanvas();
-
+        glUseProgram(gridProgram);
     GLint uniform_Resolution = glGetUniformLocation(gridProgram, "resolution");
         glUniform2f(uniform_Resolution, screen_width, screen_height);
 
@@ -148,38 +152,49 @@ void drawGrid(){
 
     GLint uniform_Offset = glGetUniformLocation(gridProgram, "offset");
         glUniform2f(uniform_Offset, offset.x, offset.y);
-    // move a vertex
-    // const uint32_t milliseconds_since_start = SDL_GetTicks();
-    // const uint32_t milliseconds_per_loop = 3000;
-    // vertices[0] = ( milliseconds_since_start % milliseconds_per_loop ) / float(milliseconds_per_loop) - 0.5f;
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Clear the screen
-    if( background_is_black )
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    else
-        glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 
     // Draw a triangle fan for the quad
+
+}
+
+void drawTiles(){
     glUseProgram(tilesProgram);
     GLint uniform_ScaleTiles = glGetUniformLocation(tilesProgram, "scale");
         glUniform1f(uniform_ScaleTiles, (1/scale)*504.8);
         
     GLint uniform_OffsetTiles = glGetUniformLocation(tilesProgram, "offset");
         glUniform2f(uniform_OffsetTiles, offset.x, offset.y);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
-    glUseProgram(gridProgram);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
+}
+
+void drawTiles2(){
+    glUseProgram(tilesProgram);
+    GLint uniform_ScaleTiles = glGetUniformLocation(tiles2Program, "scale");
+        glUniform1f(uniform_ScaleTiles, (1/scale)*504.8);
+        
+    GLint uniform_OffsetTiles = glGetUniformLocation(tiles2Program, "offset");
+        glUniform2f(uniform_OffsetTiles, offset.x, offset.y);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 }
 
 void main_loop() { 
     handleEvents(zoomPhysics, panPhysics);
+
+    // Calculate zoom and pan
+    scale = processPhysics <float> (zoomPhysics, 1.1f, 7, 300);
+    offset = processPhysics <v2d> (panPhysics, {1.1,1.1}, {0,0}, {300,300});
+
+    // Set canvas size and buffer the vertices for the quad
+    setCanvas();
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // Clear the screen
+    glClearColor(0.086f, 0.086f, 0.086f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    drawTiles();
     drawGrid();
-    // vel += acc
-    // std::cout << zoomPhysics[2] << '\n';
-    
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     SDL_GL_SwapWindow(window);
 }
@@ -224,6 +239,10 @@ void initGL(SDL_Window *window){
     auto tilesVertexSourceStr = read_shader_file("shaders/tiles.vert");
     auto tilesFragmentSourceStr = read_shader_file("shaders/tiles.frag");
     tilesProgram = compileShaders(tilesVertexSourceStr, tilesFragmentSourceStr);
+    
+    auto tiles2VertexSourceStr = read_shader_file("shaders/texture.vert");
+    auto tiles2FragmentSourceStr = read_shader_file("shaders/texture.frag");
+    tiles2Program = compileShaders(tiles2VertexSourceStr, tiles2FragmentSourceStr);
     
     glUseProgram(gridProgram);
     // Specify the layout of the vertex data
