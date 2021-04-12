@@ -170,7 +170,7 @@ void drawTiles(){
 
 void drawTiles2(){
     // float *pixels = new float[screen_width * screen_height];
-    constexpr int tiles = 40;
+    constexpr int tiles = 20;
     // std::vector<GLubyte> pixels(tiles * tiles, 255);
     // for (int i = 0; i < pixels.size() * 3 - 3; i+=3){
     //     //((float)i / (float)pixels.size()) * 255.0f

@@ -14,7 +14,10 @@ void main(){
     vec2 uv = offsetCoords/resolution;
     uv.x *= resolution.x/resolution.y;
     //uv.x *= (resolution.x/resolution.y);
-
+    vec2 normCoords = vec2(gl_FragCoord.x/tileDims.x, gl_FragCoord.y/tileDims.x) * vec2(tileDims.x/2./scale);
+    //normCoords = mod(normCoords , vec2(1)) + normCoords;
+    normCoords /= tileDims;
+    normCoords = floor(normCoords * vec2(tileDims.x))/vec2(tileDims.x);
     // LUT
     //uv.y = 1.-uv.y;
     // float b = (floor(uv.x*scale)+floor(uv.y*scale)*scale)/256.;
@@ -30,5 +33,6 @@ void main(){
     //if(col.r < 0.1)
         //col = vec3(1.,0,0);
     // Output to screen S
-    gl_FragColor = vec4(col,1);// / vec4(vec(5),1);
+    //vec3 texCol = texture2D(texture, normCoords * vec2(tileDims.x));
+    gl_FragColor = vec4(normCoords,0,1);// / vec4(vec(5),1);
 }
