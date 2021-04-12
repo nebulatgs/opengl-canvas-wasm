@@ -169,12 +169,53 @@ void drawTiles(){
 }
 
 void drawTiles2(){
-    glUseProgram(tilesProgram);
+    // float *pixels = new float[screen_width * screen_height];
+    constexpr int tiles = 40;
+    // std::vector<GLubyte> pixels(tiles * tiles, 255);
+    // for (int i = 0; i < pixels.size() * 3 - 3; i+=3){
+    //     //((float)i / (float)pixels.size()) * 255.0f
+    //     pixels[i] = 128;
+    //     pixels[i+1] = i/65;
+    //     pixels[i+2] = 255;
+    //     // pixels[i+3] = 255;
+    // }
+    GLubyte pixels[tiles][tiles][3];
+       int i, j, c;
+
+   for (i = 0; i < tiles; i++) {
+      for (j = 0; j < tiles; j++) {
+        //  c = ((((i&0x8)==0)^((j&0x8))==0))*255;
+         pixels[i][j][0] = (GLubyte) i%255;
+         pixels[i][j][1] = (GLubyte) i*j%255;
+         pixels[i][j][2] = (GLubyte) i%255;
+      }
+   }
+    auto *pixelData = pixels;
+    std::cout << (int)pixels[2][2][2] << '\n';
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tiles, tiles, 0, GL_RGB, GL_UNSIGNED_BYTE, pixelData);
+    // glBindTexture(GL_TEXTURE_2D, textureID);
+    
+    glUseProgram(tiles2Program);
+    GLint uniform_Resolution = glGetUniformLocation(tiles2Program, "resolution");
+        glUniform2f(uniform_Resolution, screen_width, screen_height);
     GLint uniform_ScaleTiles = glGetUniformLocation(tiles2Program, "scale");
-        glUniform1f(uniform_ScaleTiles, (1/scale)*504.8);
+        glUniform1f(uniform_ScaleTiles, scale);
         
     GLint uniform_OffsetTiles = glGetUniformLocation(tiles2Program, "offset");
         glUniform2f(uniform_OffsetTiles, offset.x, offset.y);
+
+    GLint uniform_tileDims = glGetUniformLocation(tiles2Program, "tileDims");
+        glUniform2f(uniform_tileDims, tiles, tiles);
+    GLint uniform_texture = glGetUniformLocation(tiles2Program, "texture");
+        glUniform1i(uniform_texture, 0);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 }
 
@@ -183,7 +224,7 @@ void main_loop() {
 
     // Calculate zoom and pan
     scale = processPhysics <float> (zoomPhysics, 1.1f, 7, 300);
-    offset = processPhysics <v2d> (panPhysics, {1.1,1.1}, {0,0}, {300,300});
+    // offset = processPhysics <v2d> (panPhysics, {1.1,1.1}, {0,0}, {300,300});
 
     // Set canvas size and buffer the vertices for the quad
     setCanvas();
@@ -193,7 +234,7 @@ void main_loop() {
     glClearColor(0.086f, 0.086f, 0.086f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    drawTiles();
+    drawTiles2();
     drawGrid();
 
     SDL_GL_SwapWindow(window);

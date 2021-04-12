@@ -9,9 +9,10 @@ uniform vec2 tileDims;
 
 void main(){
     // Normalized pixel coordinates (from 0 to 1)
-    vec2 offsetCoords = gl_FragCoord.xy + offset;
-    vec2 uv = offsetCoords.xy/resolution.xy;
-    uv.xy *= tileDims;
+    vec2 offsetCoords = -gl_FragCoord.xy - offset;
+    offsetCoords *= 100./scale;// / 1.04;
+    vec2 uv = offsetCoords/resolution;
+    uv.x *= resolution.x/resolution.y;
     //uv.x *= (resolution.x/resolution.y);
 
     // LUT
@@ -19,7 +20,15 @@ void main(){
     // float b = (floor(uv.x*scale)+floor(uv.y*scale)*scale)/256.;
     // vec2 rg = fract(uv*scale);
     // vec3 col = vec3(rg,b);
-    vec3 col = texture2D(texture, floor(uv.xy));
-    // Output to screen 
+    vec3 col = texture2D(texture, vec2(floor(uv.x), floor(uv.y))).rgb;
+    // vec3 col = vec3(0.5);
+    // vec3 col = vec3(uv < vec3(0.5) ? 0.1 : 1);
+    // vec3 col = texture2D(texture, vec2(100.,0.)).rgb;
+    // vec3 col = vec3(0);
+    if(uv.x < tileDims.x/2.)
+        col = vec3((mod(uv.y,1.) + mod(uv.x,1.))/2.);
+    //if(col.r < 0.1)
+        //col = vec3(1.,0,0);
+    // Output to screen S
     gl_FragColor = vec4(col,1);// / vec4(vec(5),1);
 }

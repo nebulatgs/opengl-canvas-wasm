@@ -15,9 +15,11 @@ float aastep(float threshold,float value){
 }
 
 void main(){
+    if(scale < 20.){
+        discard;}
     // Normalized pixel coordinates (from 0 to 1)
     // gl_FragCoord = gl_FragCoord + offset;
-    vec2 uv=(gl_FragCoord.xy + offset)/resolution.xy;
+    vec2 uv=(-gl_FragCoord.xy - offset)/resolution.xy;
     float dotResolution=resolution.y/scale/2.;
     float dotRadius=.3;
     
@@ -33,7 +35,7 @@ void main(){
     vec4 dark_gray = vec4(0);
     vec4 gray=vec4(.282,.282,.282,1);
     
-    vec4 Coord=cos(PI/scale*vec4((gl_FragCoord.xy + offset),1,1));
+    vec4 Coord=cos(PI/scale*vec4((-gl_FragCoord.xy - offset),1,1));
     vec4 gridColor=mix(dark_gray, gray, aastep(.97,max(Coord.x,Coord.y)));
     // gridColor+=vec4(0,0,0,1);
     
@@ -49,7 +51,7 @@ uniform vec2 offset;
 
 void main(){
     // Normalized pixel coordinates (from 0 to 1)
-    vec2 offsetCoords = gl_FragCoord.xy + offset;
+    vec2 offsetCoords = -gl_FragCoord.xy + offset;
     vec2 uv = offsetCoords.xy/resolution.xy;
     uv.x *= (resolution.x/resolution.y);
 
@@ -60,7 +62,44 @@ void main(){
     vec3 col = vec3(rg,b);
 
     // Output to screen 
+    gl_FragColor = vec4(col,0.3);// / vec4(vec(5),1);
+}precision lowp float;
+
+uniform vec2 resolution;
+
+uniform float scale;
+uniform vec2 offset;
+uniform sampler2D texture;
+uniform vec2 tileDims;
+
+void main(){
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 offsetCoords = -gl_FragCoord.xy - offset;
+    offsetCoords *= 100./scale;// / 1.04;
+    vec2 uv = offsetCoords/resolution;
+    uv.x *= resolution.x/resolution.y;
+    //uv.x *= (resolution.x/resolution.y);
+
+    // LUT
+    //uv.y = 1.-uv.y;
+    // float b = (floor(uv.x*scale)+floor(uv.y*scale)*scale)/256.;
+    // vec2 rg = fract(uv*scale);
+    // vec3 col = vec3(rg,b);
+    vec3 col = texture2D(texture, vec2(floor(uv.x), floor(uv.y))).rgb;
+    // vec3 col = vec3(0.5);
+    // vec3 col = vec3(uv < vec3(0.5) ? 0.1 : 1);
+    // vec3 col = texture2D(texture, vec2(100.,0.)).rgb;
+    // vec3 col = vec3(0);
+    if(uv.x < tileDims.x/2.)
+        col = vec3((mod(uv.y,1.) + mod(uv.x,1.))/2.);
+    //if(col.r < 0.1)
+        //col = vec3(1.,0,0);
+    // Output to screen S
     gl_FragColor = vec4(col,1);// / vec4(vec(5),1);
+}attribute vec4 position;
+void main()
+{
+    gl_Position=vec4(position.xyz,1.0);
 }attribute vec4 position;
 void main()
 {

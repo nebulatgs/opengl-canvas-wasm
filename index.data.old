@@ -15,11 +15,9 @@ float aastep(float threshold,float value){
 }
 
 void main(){
-    if(scale < 20.){
-        discard;}
     // Normalized pixel coordinates (from 0 to 1)
     // gl_FragCoord = gl_FragCoord + offset;
-    vec2 uv=(-gl_FragCoord.xy - offset)/resolution.xy;
+    vec2 uv=(gl_FragCoord.xy + offset)/resolution.xy;
     float dotResolution=resolution.y/scale/2.;
     float dotRadius=.3;
     
@@ -35,11 +33,40 @@ void main(){
     vec4 dark_gray = vec4(0);
     vec4 gray=vec4(.282,.282,.282,1);
     
-    vec4 Coord=cos(PI/scale*vec4((-gl_FragCoord.xy - offset),1,1));
+    vec4 Coord=cos(PI/scale*vec4((gl_FragCoord.xy + offset),1,1));
     vec4 gridColor=mix(dark_gray, gray, aastep(.97,max(Coord.x,Coord.y)));
     // gridColor+=vec4(0,0,0,1);
     
     vec4 color=mix(gray,gridColor,aastep(dotRadius,distance));
     // if(color.a < 0.03)
     //     discard;
-    gl_FragColor=color;}
+    gl_FragColor=color;}precision lowp float;
+
+uniform vec2 resolution;
+
+uniform float scale;
+uniform vec2 offset;
+
+void main(){
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 offsetCoords = gl_FragCoord.xy + offset;
+    vec2 uv = offsetCoords.xy/resolution.xy;
+    uv.x *= (resolution.x/resolution.y);
+
+    // LUT
+    //uv.y = 1.-uv.y;
+    float b = (floor(uv.x*scale)+floor(uv.y*scale)*scale)/256.;
+    vec2 rg = fract(uv*scale);
+    vec3 col = vec3(rg,b);
+
+    // Output to screen 
+    gl_FragColor = vec4(col,1);// / vec4(vec(5),1);
+}attribute vec4 position;
+void main()
+{
+    gl_Position=vec4(position.xyz,1.0);
+}attribute vec4 position;
+void main()
+{
+    gl_Position=vec4(position.xyz,1.0);
+}
