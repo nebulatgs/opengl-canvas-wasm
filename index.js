@@ -187,7 +187,7 @@ var Module = typeof Module !== 'undefined' ? Module : {};
     }
   
    }
-   loadPackage({"files": [{"filename": "/shaders/grid.frag", "start": 0, "end": 1313, "audio": 0}, {"filename": "/shaders/tiles.frag", "start": 1313, "end": 1842, "audio": 0}, {"filename": "/shaders/texture.frag", "start": 1842, "end": 3222, "audio": 0}, {"filename": "/shaders/texture.vert", "start": 3222, "end": 3302, "audio": 0}, {"filename": "/shaders/grid.vert", "start": 3302, "end": 3382, "audio": 0}, {"filename": "/shaders/tiles.vert", "start": 3382, "end": 3462, "audio": 0}], "remote_package_size": 3462, "package_uuid": "f08dd9ea-537b-4336-8fe6-f7233e324ced"});
+   loadPackage({"files": [{"filename": "/shaders/grid.frag", "start": 0, "end": 1313, "audio": 0}, {"filename": "/shaders/tiles.frag", "start": 1313, "end": 1842, "audio": 0}, {"filename": "/shaders/texture.frag", "start": 1842, "end": 3366, "audio": 0}, {"filename": "/shaders/texture.vert", "start": 3366, "end": 3446, "audio": 0}, {"filename": "/shaders/grid.vert", "start": 3446, "end": 3526, "audio": 0}, {"filename": "/shaders/tiles.vert", "start": 3526, "end": 3606, "audio": 0}], "remote_package_size": 3606, "package_uuid": "26b9d1f0-c63e-4d88-ab15-b70b2e76464e"});
   
   })();
   
@@ -1258,7 +1258,7 @@ function updateGlobalBufferAndViews(buf) {
 
 var TOTAL_STACK = 5242880;
 
-var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 16777216;
+var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 67108864;
 
 // include: runtime_init_table.js
 // In regular non-RELOCATABLE mode the table is exported
@@ -8313,6 +8313,17 @@ var ASM_CONSTS = {
       return id;
     }
 
+  function _glDeleteTextures(n, textures) {
+      for (var i = 0; i < n; i++) {
+        var id = HEAP32[(((textures)+(i*4))>>2)];
+        var texture = GL.textures[id];
+        if (!texture) continue; // GL spec: "glDeleteTextures silently ignores 0s and names that do not correspond to existing textures".
+        GLctx.deleteTexture(texture);
+        texture.name = 0;
+        GL.textures[id] = null;
+      }
+    }
+
   function _glDrawArrays(mode, first, count) {
   
       GLctx.drawArrays(mode, first, count);
@@ -9133,6 +9144,7 @@ var asmLibraryArg = {
   "glCompileShader": _glCompileShader,
   "glCreateProgram": _glCreateProgram,
   "glCreateShader": _glCreateShader,
+  "glDeleteTextures": _glDeleteTextures,
   "glDrawArrays": _glDrawArrays,
   "glEnable": _glEnable,
   "glEnableVertexAttribArray": _glEnableVertexAttribArray,

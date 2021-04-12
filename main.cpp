@@ -21,6 +21,9 @@ v2d panPhysics[3] = {{.2,.2}, {0,0}, {1,1}}, offset;
 bool isMouseDown;
 GLuint gridProgram, tilesProgram, tiles2Program;
 SDL_Window *window;
+constexpr int64_t ipow(int64_t base, int exp, int64_t result = 1) {
+  return exp < 1 ? result : ipow(base*base, exp/2, (exp % 2) ? result*base : result);
+}
 void getScreenSize(){
     screen_width = (uint16_t)EM_ASM_INT({
         var width = window.innerWidth
@@ -170,7 +173,9 @@ void drawTiles(){
 
 void drawTiles2(){
     // float *pixels = new float[screen_width * screen_height];
-    constexpr int tiles = 20;
+    constexpr int power = 11;
+    constexpr int tilesX = ipow(2, power);
+    constexpr int tilesY = ipow(2, power);
     // std::vector<GLubyte> pixels(tiles * tiles, 255);
     // for (int i = 0; i < pixels.size() * 3 - 3; i+=3){
     //     //((float)i / (float)pixels.size()) * 255.0f
@@ -179,14 +184,14 @@ void drawTiles2(){
     //     pixels[i+2] = 255;
     //     // pixels[i+3] = 255;
     // }
-    GLubyte pixels[tiles][tiles][3];
+    auto pixels = new GLubyte[tilesX][tilesY][3];
        int i, j, c;
 
-   for (i = 0; i < tiles; i++) {
-      for (j = 0; j < tiles; j++) {
+   for (i = 0; i < tilesX; i++) {
+      for (j = 0; j < tilesY; j++) {
         //  c = ((((i&0x8)==0)^((j&0x8))==0))*255;
          pixels[i][j][0] = (GLubyte) i%255;
-         pixels[i][j][1] = (GLubyte) i*j%255;
+         pixels[i][j][1] = (GLubyte) i-j%255;
          pixels[i][j][2] = (GLubyte) i%255;
       }
    }
@@ -200,7 +205,7 @@ void drawTiles2(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tiles, tiles, 0, GL_RGB, GL_UNSIGNED_BYTE, pixelData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tilesX, tilesY, 0, GL_RGB, GL_UNSIGNED_BYTE, pixelData);
     // glBindTexture(GL_TEXTURE_2D, textureID);
     
     glUseProgram(tiles2Program);
@@ -213,18 +218,20 @@ void drawTiles2(){
         glUniform2f(uniform_OffsetTiles, offset.x, offset.y);
 
     GLint uniform_tileDims = glGetUniformLocation(tiles2Program, "tileDims");
-        glUniform2f(uniform_tileDims, tiles, tiles);
+        glUniform2f(uniform_tileDims, tilesX, tilesY);
     GLint uniform_texture = glGetUniformLocation(tiles2Program, "texture");
         glUniform1i(uniform_texture, 0);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
+    delete[](pixels);
+    glDeleteTextures(1, &textureID);
 }
 
 void main_loop() { 
     handleEvents(zoomPhysics, panPhysics);
 
     // Calculate zoom and pan
-    scale = processPhysics <float> (zoomPhysics, 1.1f, 7, 300);
-    // offset = processPhysics <v2d> (panPhysics, {1.1,1.1}, {0,0}, {300,300});
+    scale = processPhysics <float> (zoomPhysics, 1.1f, 0.3f, 300);
+    offset = processPhysics <v2d> (panPhysics, {1.1,1.1}, {0,0}, {300,300});
 
     // Set canvas size and buffer the vertices for the quad
     setCanvas();
